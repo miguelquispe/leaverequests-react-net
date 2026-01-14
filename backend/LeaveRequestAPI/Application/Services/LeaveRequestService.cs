@@ -47,8 +47,53 @@ namespace LeaveRequestAPI.Application.Services
             _context.LeaveRequest.Add(request);
             await  _context.SaveChangesAsync();
 
+            // cargar el empleado para incluir el nombre en la respuesta
+            await _context.Entry(request)
+                .Reference(lr => lr.Employee)
+                .LoadAsync();
+
             // retornar el DTO resultante
             return _mapper.Map<LeaveRequestDTO>(request);
+        }
+
+        public async Task<LeaveRequestDTO?> UpdateStatusAsync(int id, LeaveRequestUpdateStatusDTO dto)
+        {
+            // buscar el leave request existente
+            var existingRequest = await _context.LeaveRequest
+                .Include(lr => lr.Employee)
+                .FirstOrDefaultAsync(lr => lr.Id == id);
+
+            if (existingRequest == null)
+            {
+                return null;
+            }
+
+            // actualizar solo el status
+            existingRequest.Status = dto.Status;
+
+            // guardar los cambios
+            _context.LeaveRequest.Update(existingRequest);
+            await _context.SaveChangesAsync();
+
+            // retornar el DTO actualizado
+            return _mapper.Map<LeaveRequestDTO>(existingRequest);
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            // buscar el leave request a eliminar
+            var leaveRequest = await _context.LeaveRequest.FindAsync(id);
+
+            if (leaveRequest == null)
+            {
+                return false;
+            }
+
+            // eliminar el registro
+            _context.LeaveRequest.Remove(leaveRequest);
+            await _context.SaveChangesAsync();
+
+            return true;
         }
 
     }

@@ -61,37 +61,36 @@ namespace LeaveRequestAPI.Controllers
 
         // PUT: api/LeaveRequests/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutLeaveRequest(int id, LeaveRequest leaveRequest)
+        public async Task<IActionResult> PutLeaveRequest(int id, LeaveRequestUpdateStatusDTO dto)
         {
-            _logger.LogInformation("PUT leave request {LeaveRequestId}", id);
+            _logger.LogInformation("PUT leave request status {LeaveRequestId}", id);
 
-            if (id != leaveRequest.Id)
+            // obtener el rol del usuario del header
+            if (!Request.Headers.TryGetValue("X-User-Role", out var userRoleHeader) || 
+                string.IsNullOrEmpty(userRoleHeader))
             {
-                _logger.LogWarning("PUT leave request id mismatch: {LeaveRequestId}", id);
-                return BadRequest();
+                _logger.LogWarning("Missing X-User-Role header for PUT request");
+                return BadRequest("Se requiere el header X-User-Role");
             }
 
-            _context.Entry(leaveRequest).State = EntityState.Modified;
+            string userRole = userRoleHeader.ToString();
 
-            try
+            // validar que solo los managers pueden actualizar el status
+            if (userRole != "Manager")
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!LeaveRequestExists(id))
-                {
-                    _logger.LogWarning("PUT leave request {LeaveRequestId} not found", id);
-                    return NotFound();
-                }
-                else
-                {
-                    _logger.LogError("PUT concurrency error for leave request {LeaveRequestId}", id);
-                    throw;
-                }
+                _logger.LogWarning("Unauthorized PUT attempt for leave request {LeaveRequestId}. User role: {UserRole}", id, userRole);
+                return Forbid("Solo los managers pueden actualizar el status de las solicitudes");
             }
 
-            return NoContent();
+            var result = await _service.UpdateStatusAsync(id, dto);
+
+            if (result == null)
+            {
+                _logger.LogWarning("PUT leave request {LeaveRequestId} not found", id);
+                return NotFound();
+            }
+
+            return Ok(result);
         }
 
         // POST: api/LeaveRequests
@@ -109,22 +108,15 @@ namespace LeaveRequestAPI.Controllers
         {
             _logger.LogInformation("DELETE leave request {LeaveRequestId}", id);
 
-            var leaveRequest = await _context.LeaveRequest.FindAsync(id);
-            if (leaveRequest == null)
+            var result = await _service.DeleteAsync(id);
+
+            if (!result)
             {
                 _logger.LogWarning("DELETE leave request {LeaveRequestId} not found", id);
                 return NotFound();
             }
 
-            _context.LeaveRequest.Remove(leaveRequest);
-            await _context.SaveChangesAsync();
-
             return NoContent();
-        }
-
-        private bool LeaveRequestExists(int id)
-        {
-            return _context.LeaveRequest.Any(e => e.Id == id);
         }
     }
 }
