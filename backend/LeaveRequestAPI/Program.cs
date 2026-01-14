@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using LeaveRequestAPI.Application.DTOs;
+using LeaveRequestAPI.Application.Interfaces;
+using LeaveRequestAPI.Application.Services;
 
 namespace LeaveRequestAPI;
 
@@ -27,6 +30,11 @@ public class Program
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
+
+        // Mapper
+        builder.Services.AddAutoMapper(typeof(LeaveRequestMapper));
+
+        builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
 
         // DB Context
         builder.Services.AddDbContext<AppDbContext>(options =>

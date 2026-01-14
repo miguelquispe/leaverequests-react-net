@@ -1,4 +1,6 @@
-﻿using LeaveRequestAPI.Domain.Entities;
+﻿using LeaveRequestAPI.Application.DTOs;
+using LeaveRequestAPI.Application.Interfaces;
+using LeaveRequestAPI.Domain.Entities;
 using LeaveRequestAPI.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,19 +13,33 @@ namespace LeaveRequestAPI.Controllers
     {
         private readonly AppDbContext _context;
         private readonly ILogger<LeaveRequestsController> _logger;
+        private readonly ILeaveRequestService _service;
 
-        public LeaveRequestsController(AppDbContext context, ILogger<LeaveRequestsController> logger)
+        public LeaveRequestsController(AppDbContext context, ILogger<LeaveRequestsController> logger, ILeaveRequestService service)
         {
             _context = context;
             _logger = logger;
+            _service = service;
         }
 
         // GET: api/LeaveRequests
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<LeaveRequest>>> GetLeaveRequest()
+        public async Task<ActionResult<IEnumerable<LeaveRequestDTO>>> GetLeaveRequest([FromQuery] int? userId, [FromQuery] string userRole)
         {
+
+            // validar role y userId (empleado)
+            if (!userId.HasValue || userId <= 0 || string.IsNullOrEmpty(userRole) )
+            {
+                _logger.LogWarning("Missing or invalid X-UserId and X-User-Role header");
+                return BadRequest("Faltan datos del usuario: Id y Role");
+            }
+
+            int employeeId = userId.Value;
+            string role = userRole.ToString();
+
             _logger.LogInformation("GET all leave requests");
-            return await _context.LeaveRequest.ToListAsync();
+            var leaveRequests = await _service.GetAllAsync(employeeId, role!);
+            return Ok(leaveRequests);
         }
 
         // GET: api/LeaveRequests/5
@@ -80,14 +96,11 @@ namespace LeaveRequestAPI.Controllers
 
         // POST: api/LeaveRequests
         [HttpPost]
-        public async Task<ActionResult<LeaveRequest>> PostLeaveRequest(LeaveRequest leaveRequest)
+        public async Task<ActionResult<LeaveRequestDTO>> PostLeaveRequest([FromBody] LeaveRequestCreateDTO dto)
         {
             _logger.LogInformation("POST new leave request");
-
-            _context.LeaveRequest.Add(leaveRequest);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetLeaveRequest", new { id = leaveRequest.Id }, leaveRequest);
+            var result = await _service.CreateAsync(dto);
+            return Ok(result);
         }
 
         // DELETE: api/LeaveRequests/5

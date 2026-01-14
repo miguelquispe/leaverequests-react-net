@@ -10,4 +10,6 @@ public class LeaveRequest
     public DateTime EndDate { get; set; }
     public LeaveStatus Status { get; set; } = LeaveStatus.Pending;
     public string Reason { get; set; } = string.Empty;
+
+    public virtual Employee? Employee { get; set; }
 }
