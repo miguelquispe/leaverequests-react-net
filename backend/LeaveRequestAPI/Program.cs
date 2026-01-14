@@ -1,7 +1,8 @@
-
 using LeaveRequestAPI.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace LeaveRequestAPI;
 
@@ -35,6 +36,23 @@ public class Program
 
         var app = builder.Build();
 
+        // Llamar a DbInitializer y registrar logs
+        using (var scope = app.Services.CreateScope())
+        {
+            var services = scope.ServiceProvider;
+            var logger = services.GetRequiredService<ILogger<Program>>();
+            try
+            {
+                var context = services.GetRequiredService<AppDbContext>();
+                DbInitializer.Initialize(context);
+                logger.LogInformation("Base de datos inicializada correctamente.");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al inicializar la base de datos.");
+            }
+        }
+
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
@@ -45,7 +63,6 @@ public class Program
         app.UseHttpsRedirection();
 
         app.UseAuthorization();
-
 
         app.MapControllers();
 
