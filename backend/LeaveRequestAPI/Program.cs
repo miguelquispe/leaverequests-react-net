@@ -1,5 +1,5 @@
 
-using LeaveRequestAPI.Data;
+using LeaveRequestAPI.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 

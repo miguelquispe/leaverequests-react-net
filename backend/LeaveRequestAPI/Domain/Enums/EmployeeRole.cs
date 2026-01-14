@@ -1,4 +1,4 @@
-﻿namespace LeaveRequestAPI.Enums;
+﻿namespace LeaveRequestAPI.Domain.Enums;
 
 public enum EmployeeRole
 {

@@ -1,6 +1,6 @@
-﻿using LeaveRequestAPI.Enums;
+﻿using LeaveRequestAPI.Domain.Enums;
 
-namespace LeaveRequestAPI.Models;
+namespace LeaveRequestAPI.Domain.Entities;
 
 public class LeaveRequest
 {

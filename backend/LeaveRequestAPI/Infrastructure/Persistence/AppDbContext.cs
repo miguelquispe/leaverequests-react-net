@@ -1,6 +1,6 @@
-﻿using LeaveRequestAPI.Models;
+﻿using LeaveRequestAPI.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-namespace LeaveRequestAPI.Data;
+namespace LeaveRequestAPI.Infrastructure.Persistence;
 
 public class AppDbContext: DbContext
 {
@@ -8,8 +8,8 @@ public class AppDbContext: DbContext
     {    
     }
 
-    public DbSet<LeaveRequest> LeaveRequest { get; set; } = null!;
-    public DbSet<Employee> Employee { get; set; } = null!;
+    public DbSet<LeaveRequest> LeaveRequest => Set<LeaveRequest>();
+    public DbSet<Employee> Employee => Set<Employee>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
