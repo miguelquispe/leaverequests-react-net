@@ -34,6 +34,32 @@ public class Program
         
         // Business Validators
         builder.Services.AddScoped<LeaveRequestBusinessValidator>();
+        
+        // CORS
+        builder.Services.AddCors(options =>
+        {
+            if (builder.Environment.IsDevelopment())
+            {
+                options.AddPolicy("CorsPolicy", policy =>
+                {
+                    policy.WithOrigins("http://localhost:3000", "http://localhost:5173", "http://localhost:4200", "http://localhost:8080")
+                          .AllowAnyMethod()
+                          .AllowAnyHeader()
+                          .AllowCredentials();
+                });
+            }
+            else
+            {
+                options.AddPolicy("CorsPolicy", policy =>
+                {
+                    policy.WithOrigins("https://yourdomain.com", "https://www.yourdomain.com") // Reemplazar con tus dominios de producción
+                          .WithMethods("GET", "POST", "PUT", "DELETE")
+                          .WithHeaders("Content-Type", "Authorization")
+                          .AllowCredentials();
+                });
+            }
+        });
+        
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
@@ -77,6 +103,8 @@ public class Program
         }
 
         app.UseHttpsRedirection();
+
+        app.UseCors("CorsPolicy");
 
         app.UseAuthorization();
 
