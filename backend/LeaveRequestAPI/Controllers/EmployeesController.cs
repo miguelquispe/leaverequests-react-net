@@ -1,3 +1,5 @@
+using LeaveRequestAPI.Application.Common;
+using LeaveRequestAPI.Application.Extensions;
 using LeaveRequestAPI.Domain.Entities;
 using LeaveRequestAPI.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +22,7 @@ namespace LeaveRequestAPI.Controllers
 
         // GET: api/employees
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Employee>>> GetEmployees()
+        public async Task<ActionResult<ApiResponse<IEnumerable<Employee>>>> GetEmployees()
         {
             try
             {
@@ -32,18 +34,18 @@ namespace LeaveRequestAPI.Controllers
 
                 _logger.LogInformation("Found {Count} employees", employees.Count);
 
-                return Ok(employees);
+                return this.ApiSuccess<IEnumerable<Employee>>(employees);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting employees");
-                return StatusCode(500, "Internal server error");
+                return this.ApiError<IEnumerable<Employee>>("Internal server error", "INTERNAL_ERROR", 500);
             }
         }
 
         // GET: api/employees/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Employee>> GetEmployee(int id)
+        public async Task<ActionResult<ApiResponse<Employee>>> GetEmployee(int id)
         {
             try
             {
@@ -54,15 +56,15 @@ namespace LeaveRequestAPI.Controllers
                 if (employee == null)
                 {
                     _logger.LogWarning("Employee with ID {Id} not found", id);
-                    return NotFound();
+                    return this.ApiError<Employee>("Employee not found", BusinessErrorCodes.EMPLOYEE_NOT_FOUND, 404);
                 }
 
-                return Ok(employee);
+                return this.ApiSuccess(employee);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting employee with ID {Id}", id);
-                return StatusCode(500, "Internal server error");
+                return this.ApiError<Employee>("Internal server error", "INTERNAL_ERROR", 500);
             }
         }
     }

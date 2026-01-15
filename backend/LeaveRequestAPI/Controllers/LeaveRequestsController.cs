@@ -38,7 +38,7 @@ namespace LeaveRequestAPI.Controllers
         // GET: api/LeaveRequests
         [HttpGet]
         [ValidateUserAuthentication]
-        public async Task<ActionResult<IEnumerable<LeaveRequestDTO>>> GetLeaveRequest()
+        public async Task<ActionResult<ApiResponse<IEnumerable<LeaveRequestDTO>>>> GetLeaveRequest()
         {
             var authenticatedUser = HttpContext.GetAuthenticatedUser()!;
             
@@ -62,13 +62,9 @@ namespace LeaveRequestAPI.Controllers
             if (!leaveRequestsResult.IsSuccess)
             {
                 _logger.LogError("Error getting leave requests: {ErrorMessage}", leaveRequestsResult.ErrorMessage);
-                return StatusCode(500, new { 
-                    message = leaveRequestsResult.ErrorMessage,
-                    code = leaveRequestsResult.ErrorCode 
-                });
             }
 
-            return Ok(leaveRequestsResult.Data);
+            return this.ApiFromResult<IEnumerable<LeaveRequestDTO>>(leaveRequestsResult);
         }
 
         // GET: api/LeaveRequests/5
@@ -91,7 +87,7 @@ namespace LeaveRequestAPI.Controllers
         // PUT: api/LeaveRequests/5
         [HttpPut("{id}")]
         [ValidateUserAuthentication]
-        public async Task<IActionResult> PutLeaveRequest(int id, LeaveRequestUpdateStatusDTO dto)
+        public async Task<ActionResult<ApiResponse<LeaveRequestDTO>>> PutLeaveRequest(int id, LeaveRequestUpdateStatusDTO dto)
         {
             _logger.LogInformation("PUT leave request status {LeaveRequestId}", id);
 
@@ -101,18 +97,7 @@ namespace LeaveRequestAPI.Controllers
             var validationResult = await _updateValidator.ValidateAsync(dto);
             if (!validationResult.IsValid)
             {
-                var errors = validationResult.Errors
-                    .GroupBy(x => x.PropertyName)
-                    .ToDictionary(
-                        g => g.Key,
-                        g => g.Select(x => x.ErrorMessage).ToArray()
-                    );
-
-                return BadRequest(new
-                {
-                    message = "Validation failed",
-                    errors = errors
-                });
+                return this.ApiValidationError<LeaveRequestDTO>(validationResult);
             }
 
             // validar que solo los managers pueden actualizar el status - MOVIDO AL BUSINESS VALIDATOR
@@ -123,36 +108,15 @@ namespace LeaveRequestAPI.Controllers
             if (!result.IsSuccess)
             {
                 _logger.LogWarning("Failed to update leave request {LeaveRequestId}: {ErrorMessage}", id, result.ErrorMessage);
-                
-                // Mapear códigos de error a códigos HTTP apropiados
-                return result.ErrorCode switch
-                {
-                    BusinessErrorCodes.REQUEST_NOT_FOUND => NotFound(new { 
-                        message = result.ErrorMessage, 
-                        code = result.ErrorCode 
-                    }),
-                    BusinessErrorCodes.INVALID_STATUS_TRANSITION => BadRequest(new { 
-                        message = result.ErrorMessage, 
-                        code = result.ErrorCode 
-                    }),
-                    BusinessErrorCodes.OPERATION_NOT_ALLOWED => StatusCode(403, new { 
-                        message = result.ErrorMessage, 
-                        code = result.ErrorCode 
-                    }),
-                    _ => StatusCode(500, new { 
-                        message = result.ErrorMessage, 
-                        code = result.ErrorCode 
-                    })
-                };
             }
 
-            return Ok(result.Data);
+            return this.ApiFromResult<LeaveRequestDTO>(result);
         }
 
         // POST: api/LeaveRequests
         [HttpPost]
         [ValidateUserAuthentication]
-        public async Task<ActionResult<LeaveRequestDTO>> PostLeaveRequest([FromBody] LeaveRequestCreateDTO dto)
+        public async Task<ActionResult<ApiResponse<LeaveRequestDTO>>> PostLeaveRequest([FromBody] LeaveRequestCreateDTO dto)
         {
             _logger.LogInformation("POST new leave request");
 
@@ -160,18 +124,7 @@ namespace LeaveRequestAPI.Controllers
             var validationResult = await _createValidator.ValidateAsync(dto);
             if (!validationResult.IsValid)
             {
-                var errors = validationResult.Errors
-                    .GroupBy(x => x.PropertyName)
-                    .ToDictionary(
-                        g => g.Key,
-                        g => g.Select(x => x.ErrorMessage).ToArray()
-                    );
-
-                return BadRequest(new
-                {
-                    message = "Validation failed",
-                    errors = errors
-                });
+                return this.ApiValidationError<LeaveRequestDTO>(validationResult);
             }
 
             var result = await _service.CreateAsync(dto);
@@ -179,34 +132,15 @@ namespace LeaveRequestAPI.Controllers
             if (!result.IsSuccess)
             {
                 _logger.LogWarning("Failed to create leave request: {ErrorMessage}", result.ErrorMessage);
-                
-                // Mapear códigos de error a códigos HTTP apropiados
-                return result.ErrorCode switch
-                {
-                    BusinessErrorCodes.EMPLOYEE_NOT_FOUND => BadRequest(new { 
-                        message = result.ErrorMessage, 
-                        code = result.ErrorCode 
-                    }),
-                    BusinessErrorCodes.START_DATE_IN_PAST or 
-                    BusinessErrorCodes.INVALID_DATE_RANGE or 
-                    BusinessErrorCodes.OVERLAPPING_REQUEST => BadRequest(new { 
-                        message = result.ErrorMessage, 
-                        code = result.ErrorCode 
-                    }),
-                    _ => StatusCode(500, new { 
-                        message = result.ErrorMessage, 
-                        code = result.ErrorCode 
-                    })
-                };
             }
 
-            return Created("", result.Data);
+            return this.ApiFromResult<LeaveRequestDTO>(result, 201);
         }
 
         // DELETE: api/LeaveRequests/5
         [HttpDelete("{id}")]
         [ValidateUserAuthentication]
-        public async Task<IActionResult> DeleteLeaveRequest(int id)
+        public async Task<ActionResult<ApiResponse>> DeleteLeaveRequest(int id)
         {
             _logger.LogInformation("DELETE leave request {LeaveRequestId}", id);
 
@@ -215,26 +149,9 @@ namespace LeaveRequestAPI.Controllers
             if (!result.IsSuccess)
             {
                 _logger.LogWarning("Failed to delete leave request {LeaveRequestId}: {ErrorMessage}", id, result.ErrorMessage);
-                
-                // Mapear códigos de error a códigos HTTP apropiados
-                return result.ErrorCode switch
-                {
-                    BusinessErrorCodes.REQUEST_NOT_FOUND => NotFound(new { 
-                        message = result.ErrorMessage, 
-                        code = result.ErrorCode 
-                    }),
-                    BusinessErrorCodes.CANNOT_DELETE_APPROVED_REQUEST => BadRequest(new { 
-                        message = result.ErrorMessage, 
-                        code = result.ErrorCode 
-                    }),
-                    _ => StatusCode(500, new { 
-                        message = result.ErrorMessage, 
-                        code = result.ErrorCode 
-                    })
-                };
             }
 
-            return NoContent();
+            return this.ApiFromResult(result, 204);
         }
     }
 }

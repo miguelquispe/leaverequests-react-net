@@ -19,11 +19,15 @@ public class ValidateUserAuthenticationAttribute : ActionFilterAttribute
             userId <= 0)
         {
             logger.LogWarning("Missing or invalid X-User-Id header");
-            context.Result = new BadRequestObjectResult(new
-            {
-                message = "Se requiere un header X-User-Id válido",
-                code = BusinessErrorCodes.MISSING_AUTH_HEADERS
-            });
+            
+            var response = ApiResponse.CreateError(
+                "Valid HTTP header X-User-Id is required", 
+                BusinessErrorCodes.MISSING_AUTH_HEADERS, 
+                400, 
+                new MetaInfo { RequestId = context.HttpContext.TraceIdentifier }
+            );
+            
+            context.Result = new BadRequestObjectResult(response);
             return;
         }
 
@@ -32,11 +36,15 @@ public class ValidateUserAuthenticationAttribute : ActionFilterAttribute
             string.IsNullOrEmpty(userRoleHeader))
         {
             logger.LogWarning("Missing X-User-Role header");
-            context.Result = new BadRequestObjectResult(new
-            {
-                message = "Se requiere el header X-User-Role",
-                code = BusinessErrorCodes.MISSING_AUTH_HEADERS
-            });
+            
+            var response = ApiResponse.CreateError(
+                "Valid HTTP header X-User-Role is required", 
+                BusinessErrorCodes.MISSING_AUTH_HEADERS, 
+                400, 
+                new MetaInfo { RequestId = context.HttpContext.TraceIdentifier }
+            );
+            
+            context.Result = new BadRequestObjectResult(response);
             return;
         }
 
@@ -55,11 +63,14 @@ public class ValidateUserAuthenticationAttribute : ActionFilterAttribute
                 _ => 500
             };
 
-            context.Result = new ObjectResult(new
-            {
-                message = authResult.ErrorMessage,
-                code = authResult.ErrorCode
-            })
+            var response = ApiResponse.CreateError(
+                authResult.ErrorMessage, 
+                authResult.ErrorCode, 
+                statusCode, 
+                new MetaInfo { RequestId = context.HttpContext.TraceIdentifier }
+            );
+
+            context.Result = new ObjectResult(response)
             {
                 StatusCode = statusCode
             };
