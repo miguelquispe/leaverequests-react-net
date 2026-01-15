@@ -1,11 +1,11 @@
-using LeaveRequestAPI.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
-using System.Text.Json.Serialization;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using FluentValidation;
 using LeaveRequestAPI.Application.DTOs;
 using LeaveRequestAPI.Application.Interfaces;
 using LeaveRequestAPI.Application.Services;
+using LeaveRequestAPI.Application.Validators;
+using LeaveRequestAPI.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 namespace LeaveRequestAPI;
 
@@ -27,6 +27,10 @@ public class Program
         {
             options.LowercaseUrls = true;
         });
+
+        // FluentValidation
+        builder.Services.AddScoped<IValidator<LeaveRequestCreateDTO>, LeaveRequestCreateDTOValidator>();
+        builder.Services.AddScoped<IValidator<LeaveRequestUpdateStatusDTO>, LeaveRequestUpdateStatusDTOValidator>();
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();

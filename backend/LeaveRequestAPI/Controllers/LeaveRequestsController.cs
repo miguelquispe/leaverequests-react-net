@@ -4,6 +4,7 @@ using LeaveRequestAPI.Domain.Entities;
 using LeaveRequestAPI.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using FluentValidation;
 
 namespace LeaveRequestAPI.Controllers
 {
@@ -14,12 +15,21 @@ namespace LeaveRequestAPI.Controllers
         private readonly AppDbContext _context;
         private readonly ILogger<LeaveRequestsController> _logger;
         private readonly ILeaveRequestService _service;
+        private readonly IValidator<LeaveRequestCreateDTO> _createValidator;
+        private readonly IValidator<LeaveRequestUpdateStatusDTO> _updateValidator;
 
-        public LeaveRequestsController(AppDbContext context, ILogger<LeaveRequestsController> logger, ILeaveRequestService service)
+        public LeaveRequestsController(
+            AppDbContext context, 
+            ILogger<LeaveRequestsController> logger, 
+            ILeaveRequestService service,
+            IValidator<LeaveRequestCreateDTO> createValidator,
+            IValidator<LeaveRequestUpdateStatusDTO> updateValidator)
         {
             _context = context;
             _logger = logger;
             _service = service;
+            _createValidator = createValidator;
+            _updateValidator = updateValidator;
         }
 
         // GET: api/LeaveRequests
@@ -66,27 +76,45 @@ namespace LeaveRequestAPI.Controllers
         }
 
         // GET: api/LeaveRequests/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<LeaveRequest>> GetLeaveRequest(int id)
-        {
-            _logger.LogInformation("GET leave request {LeaveRequestId}", id);
+        // [HttpGet("{id}")]
+        // public async Task<ActionResult<LeaveRequest>> GetLeaveRequest(int id)
+        // {
+        //     _logger.LogInformation("GET leave request {LeaveRequestId}", id);
 
-            var leaveRequest = await _context.LeaveRequest.FindAsync(id);
+        //     var leaveRequest = await _context.LeaveRequest.FindAsync(id);
 
-            if (leaveRequest == null)
-            {
-                _logger.LogWarning("Leave request {LeaveRequestId} not found", id);
-                return NotFound();
-            }
+        //     if (leaveRequest == null)
+        //     {
+        //         _logger.LogWarning("Leave request {LeaveRequestId} not found", id);
+        //         return NotFound();
+        //     }
 
-            return leaveRequest;
-        }
+        //     return leaveRequest;
+        // }
 
         // PUT: api/LeaveRequests/5
         [HttpPut("{id}")]
         public async Task<IActionResult> PutLeaveRequest(int id, LeaveRequestUpdateStatusDTO dto)
         {
             _logger.LogInformation("PUT leave request status {LeaveRequestId}", id);
+
+            // Validar el DTO
+            var validationResult = await _updateValidator.ValidateAsync(dto);
+            if (!validationResult.IsValid)
+            {
+                var errors = validationResult.Errors
+                    .GroupBy(x => x.PropertyName)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.Select(x => x.ErrorMessage).ToArray()
+                    );
+
+                return BadRequest(new
+                {
+                    message = "Validation failed",
+                    errors = errors
+                });
+            }
 
             // obtener el rol del usuario del header
             if (!Request.Headers.TryGetValue("X-User-Role", out var userRoleHeader) || 
@@ -121,6 +149,25 @@ namespace LeaveRequestAPI.Controllers
         public async Task<ActionResult<LeaveRequestDTO>> PostLeaveRequest([FromBody] LeaveRequestCreateDTO dto)
         {
             _logger.LogInformation("POST new leave request");
+
+            // Validar el DTO
+            var validationResult = await _createValidator.ValidateAsync(dto);
+            if (!validationResult.IsValid)
+            {
+                var errors = validationResult.Errors
+                    .GroupBy(x => x.PropertyName)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.Select(x => x.ErrorMessage).ToArray()
+                    );
+
+                return BadRequest(new
+                {
+                    message = "Validation failed",
+                    errors = errors
+                });
+            }
+
             var result = await _service.CreateAsync(dto);
             return Ok(result);
         }
