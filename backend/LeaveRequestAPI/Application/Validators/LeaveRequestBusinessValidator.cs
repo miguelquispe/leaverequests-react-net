@@ -44,18 +44,19 @@ public class LeaveRequestBusinessValidator
                 BusinessErrorCodes.INVALID_DATE_RANGE);
         }
 
-        // 4. Validar que no haya solapamiento con otras solicitudes del mismo empleado
-        var hasOverlapping = await _context.LeaveRequest
-            .AnyAsync(lr => lr.EmployeeId == dto.EmployeeId &&
-                          lr.Status == LeaveStatus.Approved &&
-                          ((dto.StartDate >= lr.StartDate && dto.StartDate <= lr.EndDate) ||
-                           (dto.EndDate >= lr.StartDate && dto.EndDate <= lr.EndDate) ||
-                           (dto.StartDate <= lr.StartDate && dto.EndDate >= lr.EndDate)));
+        // 4. Validar que no haya solapamiento con otras solicitudes aprobadas del mismo empleado
+        var overlappingRequest = await _context.LeaveRequest
+            .Where(lr => lr.EmployeeId == dto.EmployeeId &&
+                       lr.Status == LeaveStatus.Approved &&
+                       dto.StartDate <= lr.EndDate && 
+                       dto.EndDate >= lr.StartDate)
+            .Select(lr => new { lr.StartDate, lr.EndDate })
+            .FirstOrDefaultAsync();
 
-        if (hasOverlapping)
+        if (overlappingRequest != null)
         {
             return Result.Failure(
-                "The requested dates overlap with an existing approved leave request.",
+                $"The requested dates ({dto.StartDate:dd/MM/yyyy} - {dto.EndDate:dd/MM/yyyy}) overlap with an existing approved leave request ({overlappingRequest.StartDate:dd/MM/yyyy} - {overlappingRequest.EndDate:dd/MM/yyyy}). Please select different dates.",
                 BusinessErrorCodes.OVERLAPPING_REQUEST);
         }
 
