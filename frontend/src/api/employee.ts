@@ -1,4 +1,4 @@
-import type { Employee } from "@/core/types/leave-request";
+import type { Employee } from "@/core/types/employee";
 import apiClient from "./api-client";
 
 // Local aliases for clarity
