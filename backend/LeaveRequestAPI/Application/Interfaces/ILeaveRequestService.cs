@@ -5,7 +5,7 @@ namespace LeaveRequestAPI.Application.Interfaces
 {
     public interface ILeaveRequestService
     {
-        Task<IEnumerable<LeaveRequestDTO>> GetAllAsync(int userId, string role);
+        Task<IEnumerable<LeaveRequestDTO>> GetAllAsync(int? userId = null);
         Task<LeaveRequestDTO> CreateAsync(LeaveRequestCreateDTO request);
         Task<LeaveRequestDTO?> UpdateStatusAsync(int id, LeaveRequestUpdateStatusDTO dto);
         Task<bool> DeleteAsync(int id);

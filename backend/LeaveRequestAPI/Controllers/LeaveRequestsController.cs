@@ -24,21 +24,44 @@ namespace LeaveRequestAPI.Controllers
 
         // GET: api/LeaveRequests
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<LeaveRequestDTO>>> GetLeaveRequest([FromQuery] int? userId, [FromQuery] string userRole)
+        public async Task<ActionResult<IEnumerable<LeaveRequestDTO>>> GetLeaveRequest()
         {
-
-            // validar role y userId (empleado)
-            if (!userId.HasValue || userId <= 0 || string.IsNullOrEmpty(userRole) )
+            // obtener el userId del header
+            if (!Request.Headers.TryGetValue("X-User-Id", out var userIdHeader) || 
+                string.IsNullOrEmpty(userIdHeader) ||
+                !int.TryParse(userIdHeader, out int userId) ||
+                userId <= 0)
             {
-                _logger.LogWarning("Missing or invalid X-UserId and X-User-Role header");
-                return BadRequest("Faltan datos del usuario: Id y Role");
+                _logger.LogWarning("Missing or invalid X-User-Id header");
+                return BadRequest("Se requiere un header X-User-Id válido");
             }
 
-            int employeeId = userId.Value;
-            string role = userRole.ToString();
+            // obtener el rol del usuario del header
+            if (!Request.Headers.TryGetValue("X-User-Role", out var userRoleHeader) || 
+                string.IsNullOrEmpty(userRoleHeader))
+            {
+                _logger.LogWarning("Missing X-User-Role header for GET request");
+                return BadRequest("Se requiere el header X-User-Role");
+            }
 
-            _logger.LogInformation("GET all leave requests");
-            var leaveRequests = await _service.GetAllAsync(employeeId, role!);
+            string userRole = userRoleHeader.ToString();
+
+            _logger.LogInformation("GET leave requests for user {UserId} with role {UserRole}", userId, userRole);
+
+            IEnumerable<LeaveRequestDTO> leaveRequests;
+
+            // validar role y determinar qué datos retornar
+            if (userRole == "Manager")
+            {
+                // Los managers pueden ver todas las solicitudes
+                leaveRequests = await _service.GetAllAsync();
+            }
+            else
+            {
+                // Los empleados solo pueden ver sus propias solicitudes
+                leaveRequests = await _service.GetAllAsync(userId);
+            }
+
             return Ok(leaveRequests);
         }
 

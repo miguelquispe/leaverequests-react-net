@@ -19,16 +19,17 @@ namespace LeaveRequestAPI.Application.Services
             _mapper = mapper;
         }
 
-        public async Task<IEnumerable<LeaveRequestDTO>> GetAllAsync(int userId, string role)
+        public async Task<IEnumerable<LeaveRequestDTO>> GetAllAsync(int? userId = null)
         {
             // consultar la base de datos para obtener datos de empleado
             var query = _context.LeaveRequest.Include(lr => lr.Employee).AsQueryable();
 
-            // validamos role y filtramos por userId si es empleado
-            if (role != "Manager")
+            // filtrar por userId si se proporciona (para empleados)
+            if (userId.HasValue)
             {
-                query = query.Where(x => x.EmployeeId == userId);
+                query = query.Where(x => x.EmployeeId == userId.Value);
             }
+            // Si userId es null, retorna todas las solicitudes (para managers)
 
             // ejecutar la consulta
             var entities = await query.ToListAsync();
