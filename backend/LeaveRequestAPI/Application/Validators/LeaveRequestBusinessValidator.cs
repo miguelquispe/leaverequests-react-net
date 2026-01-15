@@ -63,9 +63,17 @@ public class LeaveRequestBusinessValidator
         return Result.Success();
     }
 
-    public async Task<Result> ValidateUpdateStatusAsync(int leaveRequestId, LeaveRequestUpdateStatusDTO dto)
+    public async Task<Result> ValidateUpdateStatusAsync(int leaveRequestId, LeaveRequestUpdateStatusDTO dto, Domain.Enums.EmployeeRole userRole)
     {
-        // 1. Validar que la solicitud existe
+        // 1. Validar que solo managers pueden actualizar status
+        if (userRole != Domain.Enums.EmployeeRole.Manager)
+        {
+            return Result.Failure(
+                "Only managers can update the status of leave requests.",
+                BusinessErrorCodes.OPERATION_NOT_ALLOWED);
+        }
+
+        // 2. Validar que la solicitud existe
         var leaveRequest = await _context.LeaveRequest
             .FirstOrDefaultAsync(lr => lr.Id == leaveRequestId);
 
@@ -76,7 +84,7 @@ public class LeaveRequestBusinessValidator
                 BusinessErrorCodes.REQUEST_NOT_FOUND);
         }
 
-        // 2. Validar transiciones de estado válidas
+        // 3. Validar transiciones de estado válidas
         if (leaveRequest.Status != LeaveStatus.Pending)
         {
             return Result.Failure(

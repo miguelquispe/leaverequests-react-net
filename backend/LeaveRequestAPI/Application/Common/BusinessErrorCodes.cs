@@ -20,6 +20,9 @@ public static class BusinessErrorCodes
     public const string REQUEST_NOT_FOUND = "REQUEST_NOT_FOUND";
     public const string CANNOT_DELETE_APPROVED_REQUEST = "CANNOT_DELETE_APPROVED_REQUEST";
     
+    // Authorization errors
+    public const string INSUFFICIENT_PERMISSIONS = "INSUFFICIENT_PERMISSIONS";
+    
     // General business errors
     public const string OPERATION_NOT_ALLOWED = "OPERATION_NOT_ALLOWED";
 }

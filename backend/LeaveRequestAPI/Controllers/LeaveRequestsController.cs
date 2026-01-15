@@ -115,15 +115,10 @@ namespace LeaveRequestAPI.Controllers
                 });
             }
 
-            // validar que solo los managers pueden actualizar el status
-            if (authenticatedUser.Role != Domain.Enums.EmployeeRole.Manager)
-            {
-                _logger.LogWarning("Unauthorized PUT attempt for leave request {LeaveRequestId}. User role: {UserRole}", 
-                    id, authenticatedUser.Role);
-                return Forbid("Solo los managers pueden actualizar el status de las solicitudes");
-            }
-
-            var result = await _service.UpdateStatusAsync(id, dto);
+            // validar que solo los managers pueden actualizar el status - MOVIDO AL BUSINESS VALIDATOR
+            // La validación de rol ahora se maneja en el BusinessValidator
+            
+            var result = await _service.UpdateStatusAsync(id, dto, authenticatedUser.Role);
 
             if (!result.IsSuccess)
             {
@@ -137,6 +132,10 @@ namespace LeaveRequestAPI.Controllers
                         code = result.ErrorCode 
                     }),
                     BusinessErrorCodes.INVALID_STATUS_TRANSITION => BadRequest(new { 
+                        message = result.ErrorMessage, 
+                        code = result.ErrorCode 
+                    }),
+                    BusinessErrorCodes.OPERATION_NOT_ALLOWED => StatusCode(403, new { 
                         message = result.ErrorMessage, 
                         code = result.ErrorCode 
                     }),

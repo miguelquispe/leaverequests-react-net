@@ -89,12 +89,12 @@ namespace LeaveRequestAPI.Application.Services
             }
         }
 
-        public async Task<Result<LeaveRequestDTO>> UpdateStatusAsync(int id, LeaveRequestUpdateStatusDTO dto)
+        public async Task<Result<LeaveRequestDTO>> UpdateStatusAsync(int id, LeaveRequestUpdateStatusDTO dto, EmployeeRole userRole)
         {
             try
             {
-                // 1. Validaciones de negocio
-                var businessValidation = await _businessValidator.ValidateUpdateStatusAsync(id, dto);
+                // 1. Validaciones de negocio (incluyendo validación de rol)
+                var businessValidation = await _businessValidator.ValidateUpdateStatusAsync(id, dto, userRole);
                 if (!businessValidation.IsSuccess)
                 {
                     return Result<LeaveRequestDTO>.Failure(businessValidation.ErrorMessage, businessValidation.ErrorCode);
