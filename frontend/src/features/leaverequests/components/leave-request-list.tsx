@@ -1,47 +1,12 @@
-import { useState, useEffect } from "react";
-import type { LeaveRequest } from "@/core/types/leave-request";
+// import { useState, useEffect } from "react";
+// import type { LeaveRequest } from "@/core/types/leave-request";
+import { useGetLeaveRequests } from "../hooks/use-get-leave-requests";
 // If you need modified types for ui
 // import type { LeaveRequestFeature } from "../types";
 
-// Mock data for demonstration - replace with actual API call
-const mockLeaveRequests: LeaveRequest[] = [
-  {
-    id: 1,
-    employeeName: "John Doe",
-    startDate: "2026-01-20T00:00:00",
-    endDate: "2026-01-22T00:00:00",
-    status: "Pending",
-    reason: "Family vacation",
-  },
-  {
-    id: 2,
-    employeeName: "Jane Smith",
-    startDate: "2026-02-01T00:00:00",
-    endDate: "2026-02-03T00:00:00",
-    status: "Approved",
-    reason: "Medical appointment",
-  },
-  {
-    id: 3,
-    employeeName: "Mike Johnson",
-    startDate: "2026-01-25T00:00:00",
-    endDate: "2026-01-26T00:00:00",
-    status: "Rejected",
-    reason: "Personal day",
-  },
-];
-
 export function LeaveRequestList() {
-  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // TODO: Replace with actual API call
-    setTimeout(() => {
-      setLeaveRequests(mockLeaveRequests);
-      setLoading(false);
-    }, 1000);
-  }, []);
+  const { data: response, isLoading, error, refetch } = useGetLeaveRequests();
+  const leaveRequests = response?.data || [];
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "-";
@@ -64,11 +29,25 @@ export function LeaveRequestList() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         <span className="ml-2 text-gray-600">Loading leave requests...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-red-500 text-lg">Error: {error.message}</p>
+        <button
+          onClick={() => refetch()}
+          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Try Again
+        </button>
       </div>
     );
   }
