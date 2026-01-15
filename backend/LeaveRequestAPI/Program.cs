@@ -42,6 +42,7 @@ public class Program
         builder.Services.AddAutoMapper(typeof(LeaveRequestMapper));
 
         builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
+        builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 
         // DB Context
         builder.Services.AddDbContext<AppDbContext>(options =>

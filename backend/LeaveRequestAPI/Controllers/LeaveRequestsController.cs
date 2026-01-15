@@ -1,5 +1,7 @@
 ﻿using LeaveRequestAPI.Application.Common;
 using LeaveRequestAPI.Application.DTOs;
+using LeaveRequestAPI.Application.Extensions;
+using LeaveRequestAPI.Application.Filters;
 using LeaveRequestAPI.Application.Interfaces;
 using LeaveRequestAPI.Domain.Entities;
 using LeaveRequestAPI.Infrastructure.Persistence;
@@ -35,34 +37,18 @@ namespace LeaveRequestAPI.Controllers
 
         // GET: api/LeaveRequests
         [HttpGet]
+        [ValidateUserAuthentication]
         public async Task<ActionResult<IEnumerable<LeaveRequestDTO>>> GetLeaveRequest()
         {
-            // obtener el userId del header
-            if (!Request.Headers.TryGetValue("X-User-Id", out var userIdHeader) || 
-                string.IsNullOrEmpty(userIdHeader) ||
-                !int.TryParse(userIdHeader, out int userId) ||
-                userId <= 0)
-            {
-                _logger.LogWarning("Missing or invalid X-User-Id header");
-                return BadRequest("Se requiere un header X-User-Id válido");
-            }
-
-            // obtener el rol del usuario del header
-            if (!Request.Headers.TryGetValue("X-User-Role", out var userRoleHeader) || 
-                string.IsNullOrEmpty(userRoleHeader))
-            {
-                _logger.LogWarning("Missing X-User-Role header for GET request");
-                return BadRequest("Se requiere el header X-User-Role");
-            }
-
-            string userRole = userRoleHeader.ToString();
-
-            _logger.LogInformation("GET leave requests for user {UserId} with role {UserRole}", userId, userRole);
+            var authenticatedUser = HttpContext.GetAuthenticatedUser()!;
+            
+            _logger.LogInformation("GET leave requests for user {UserId} with role {UserRole}", 
+                authenticatedUser.UserId, authenticatedUser.Role);
 
             Result<IEnumerable<LeaveRequestDTO>> leaveRequestsResult;
 
             // validar role y determinar qué datos retornar
-            if (userRole == "Manager")
+            if (authenticatedUser.Role == Domain.Enums.EmployeeRole.Manager)
             {
                 // Los managers pueden ver todas las solicitudes
                 leaveRequestsResult = await _service.GetAllAsync();
@@ -70,7 +56,7 @@ namespace LeaveRequestAPI.Controllers
             else
             {
                 // Los empleados solo pueden ver sus propias solicitudes
-                leaveRequestsResult = await _service.GetAllAsync(userId);
+                leaveRequestsResult = await _service.GetAllAsync(authenticatedUser.UserId);
             }
 
             if (!leaveRequestsResult.IsSuccess)
@@ -104,9 +90,12 @@ namespace LeaveRequestAPI.Controllers
 
         // PUT: api/LeaveRequests/5
         [HttpPut("{id}")]
+        [ValidateUserAuthentication]
         public async Task<IActionResult> PutLeaveRequest(int id, LeaveRequestUpdateStatusDTO dto)
         {
             _logger.LogInformation("PUT leave request status {LeaveRequestId}", id);
+
+            var authenticatedUser = HttpContext.GetAuthenticatedUser()!;
 
             // Validar el DTO
             var validationResult = await _updateValidator.ValidateAsync(dto);
@@ -126,20 +115,11 @@ namespace LeaveRequestAPI.Controllers
                 });
             }
 
-            // obtener el rol del usuario del header
-            if (!Request.Headers.TryGetValue("X-User-Role", out var userRoleHeader) || 
-                string.IsNullOrEmpty(userRoleHeader))
-            {
-                _logger.LogWarning("Missing X-User-Role header for PUT request");
-                return BadRequest("Se requiere el header X-User-Role");
-            }
-
-            string userRole = userRoleHeader.ToString();
-
             // validar que solo los managers pueden actualizar el status
-            if (userRole != "Manager")
+            if (authenticatedUser.Role != Domain.Enums.EmployeeRole.Manager)
             {
-                _logger.LogWarning("Unauthorized PUT attempt for leave request {LeaveRequestId}. User role: {UserRole}", id, userRole);
+                _logger.LogWarning("Unauthorized PUT attempt for leave request {LeaveRequestId}. User role: {UserRole}", 
+                    id, authenticatedUser.Role);
                 return Forbid("Solo los managers pueden actualizar el status de las solicitudes");
             }
 
@@ -172,6 +152,7 @@ namespace LeaveRequestAPI.Controllers
 
         // POST: api/LeaveRequests
         [HttpPost]
+        [ValidateUserAuthentication]
         public async Task<ActionResult<LeaveRequestDTO>> PostLeaveRequest([FromBody] LeaveRequestCreateDTO dto)
         {
             _logger.LogInformation("POST new leave request");
@@ -225,6 +206,7 @@ namespace LeaveRequestAPI.Controllers
 
         // DELETE: api/LeaveRequests/5
         [HttpDelete("{id}")]
+        [ValidateUserAuthentication]
         public async Task<IActionResult> DeleteLeaveRequest(int id)
         {
             _logger.LogInformation("DELETE leave request {LeaveRequestId}", id);
