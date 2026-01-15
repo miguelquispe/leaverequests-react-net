@@ -1,13 +1,14 @@
-﻿using LeaveRequestAPI.Application.DTOs;
+﻿using LeaveRequestAPI.Application.Common;
+using LeaveRequestAPI.Application.DTOs;
 using LeaveRequestAPI.Domain.Entities;
 
 namespace LeaveRequestAPI.Application.Interfaces
 {
     public interface ILeaveRequestService
     {
-        Task<IEnumerable<LeaveRequestDTO>> GetAllAsync(int? userId = null);
-        Task<LeaveRequestDTO> CreateAsync(LeaveRequestCreateDTO request);
-        Task<LeaveRequestDTO?> UpdateStatusAsync(int id, LeaveRequestUpdateStatusDTO dto);
-        Task<bool> DeleteAsync(int id);
+        Task<Result<IEnumerable<LeaveRequestDTO>>> GetAllAsync(int? userId = null);
+        Task<Result<LeaveRequestDTO>> CreateAsync(LeaveRequestCreateDTO request);
+        Task<Result<LeaveRequestDTO>> UpdateStatusAsync(int id, LeaveRequestUpdateStatusDTO dto);
+        Task<Result> DeleteAsync(int id);
     }
 }

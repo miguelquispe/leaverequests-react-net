@@ -1,4 +1,5 @@
-﻿using LeaveRequestAPI.Application.DTOs;
+﻿using LeaveRequestAPI.Application.Common;
+using LeaveRequestAPI.Application.DTOs;
 using LeaveRequestAPI.Application.Interfaces;
 using LeaveRequestAPI.Domain.Entities;
 using LeaveRequestAPI.Infrastructure.Persistence;
@@ -58,21 +59,30 @@ namespace LeaveRequestAPI.Controllers
 
             _logger.LogInformation("GET leave requests for user {UserId} with role {UserRole}", userId, userRole);
 
-            IEnumerable<LeaveRequestDTO> leaveRequests;
+            Result<IEnumerable<LeaveRequestDTO>> leaveRequestsResult;
 
             // validar role y determinar qué datos retornar
             if (userRole == "Manager")
             {
                 // Los managers pueden ver todas las solicitudes
-                leaveRequests = await _service.GetAllAsync();
+                leaveRequestsResult = await _service.GetAllAsync();
             }
             else
             {
                 // Los empleados solo pueden ver sus propias solicitudes
-                leaveRequests = await _service.GetAllAsync(userId);
+                leaveRequestsResult = await _service.GetAllAsync(userId);
             }
 
-            return Ok(leaveRequests);
+            if (!leaveRequestsResult.IsSuccess)
+            {
+                _logger.LogError("Error getting leave requests: {ErrorMessage}", leaveRequestsResult.ErrorMessage);
+                return StatusCode(500, new { 
+                    message = leaveRequestsResult.ErrorMessage,
+                    code = leaveRequestsResult.ErrorCode 
+                });
+            }
+
+            return Ok(leaveRequestsResult.Data);
         }
 
         // GET: api/LeaveRequests/5
@@ -135,13 +145,29 @@ namespace LeaveRequestAPI.Controllers
 
             var result = await _service.UpdateStatusAsync(id, dto);
 
-            if (result == null)
+            if (!result.IsSuccess)
             {
-                _logger.LogWarning("PUT leave request {LeaveRequestId} not found", id);
-                return NotFound();
+                _logger.LogWarning("Failed to update leave request {LeaveRequestId}: {ErrorMessage}", id, result.ErrorMessage);
+                
+                // Mapear códigos de error a códigos HTTP apropiados
+                return result.ErrorCode switch
+                {
+                    BusinessErrorCodes.REQUEST_NOT_FOUND => NotFound(new { 
+                        message = result.ErrorMessage, 
+                        code = result.ErrorCode 
+                    }),
+                    BusinessErrorCodes.INVALID_STATUS_TRANSITION => BadRequest(new { 
+                        message = result.ErrorMessage, 
+                        code = result.ErrorCode 
+                    }),
+                    _ => StatusCode(500, new { 
+                        message = result.ErrorMessage, 
+                        code = result.ErrorCode 
+                    })
+                };
             }
 
-            return Ok(result);
+            return Ok(result.Data);
         }
 
         // POST: api/LeaveRequests
@@ -169,7 +195,32 @@ namespace LeaveRequestAPI.Controllers
             }
 
             var result = await _service.CreateAsync(dto);
-            return Ok(result);
+            
+            if (!result.IsSuccess)
+            {
+                _logger.LogWarning("Failed to create leave request: {ErrorMessage}", result.ErrorMessage);
+                
+                // Mapear códigos de error a códigos HTTP apropiados
+                return result.ErrorCode switch
+                {
+                    BusinessErrorCodes.EMPLOYEE_NOT_FOUND => BadRequest(new { 
+                        message = result.ErrorMessage, 
+                        code = result.ErrorCode 
+                    }),
+                    BusinessErrorCodes.START_DATE_IN_PAST or 
+                    BusinessErrorCodes.INVALID_DATE_RANGE or 
+                    BusinessErrorCodes.OVERLAPPING_REQUEST => BadRequest(new { 
+                        message = result.ErrorMessage, 
+                        code = result.ErrorCode 
+                    }),
+                    _ => StatusCode(500, new { 
+                        message = result.ErrorMessage, 
+                        code = result.ErrorCode 
+                    })
+                };
+            }
+
+            return Created("", result.Data);
         }
 
         // DELETE: api/LeaveRequests/5
@@ -180,10 +231,26 @@ namespace LeaveRequestAPI.Controllers
 
             var result = await _service.DeleteAsync(id);
 
-            if (!result)
+            if (!result.IsSuccess)
             {
-                _logger.LogWarning("DELETE leave request {LeaveRequestId} not found", id);
-                return NotFound();
+                _logger.LogWarning("Failed to delete leave request {LeaveRequestId}: {ErrorMessage}", id, result.ErrorMessage);
+                
+                // Mapear códigos de error a códigos HTTP apropiados
+                return result.ErrorCode switch
+                {
+                    BusinessErrorCodes.REQUEST_NOT_FOUND => NotFound(new { 
+                        message = result.ErrorMessage, 
+                        code = result.ErrorCode 
+                    }),
+                    BusinessErrorCodes.CANNOT_DELETE_APPROVED_REQUEST => BadRequest(new { 
+                        message = result.ErrorMessage, 
+                        code = result.ErrorCode 
+                    }),
+                    _ => StatusCode(500, new { 
+                        message = result.ErrorMessage, 
+                        code = result.ErrorCode 
+                    })
+                };
             }
 
             return NoContent();

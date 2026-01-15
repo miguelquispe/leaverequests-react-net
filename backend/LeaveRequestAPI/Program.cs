@@ -31,6 +31,9 @@ public class Program
         // FluentValidation
         builder.Services.AddScoped<IValidator<LeaveRequestCreateDTO>, LeaveRequestCreateDTOValidator>();
         builder.Services.AddScoped<IValidator<LeaveRequestUpdateStatusDTO>, LeaveRequestUpdateStatusDTOValidator>();
+        
+        // Business Validators
+        builder.Services.AddScoped<LeaveRequestBusinessValidator>();
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
