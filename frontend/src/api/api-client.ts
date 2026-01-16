@@ -1,4 +1,5 @@
-import axios from 'axios';
+import type { ApiResponse } from '@/core/types/api-response';
+import axios, { type AxiosResponse } from 'axios';
 
 const API_URL = import.meta.env.VITE_URL_API || 'http://localhost:7076/';
 
@@ -36,5 +37,12 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Only for backend generated API calls
+// Helper function to type responses
+export const apiResponse = async <T>(request: Promise<AxiosResponse<unknown>>): Promise<ApiResponse<T>> => {
+  const response = await request;
+  return response.data as ApiResponse<T>;
+}
 
 export default apiClient;

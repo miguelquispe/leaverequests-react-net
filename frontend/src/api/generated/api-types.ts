@@ -26,9 +26,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["Employee"][];
-                        "application/json": components["schemas"]["Employee"][];
-                        "text/json": components["schemas"]["Employee"][];
+                        "text/plain": components["schemas"]["EmployeeIEnumerableApiResponse"];
+                        "application/json": components["schemas"]["EmployeeIEnumerableApiResponse"];
+                        "text/json": components["schemas"]["EmployeeIEnumerableApiResponse"];
                     };
                 };
             };
@@ -65,9 +65,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["Employee"];
-                        "application/json": components["schemas"]["Employee"];
-                        "text/json": components["schemas"]["Employee"];
+                        "text/plain": components["schemas"]["EmployeeApiResponse"];
+                        "application/json": components["schemas"]["EmployeeApiResponse"];
+                        "text/json": components["schemas"]["EmployeeApiResponse"];
                     };
                 };
             };
@@ -102,9 +102,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["LeaveRequestDTO"][];
-                        "application/json": components["schemas"]["LeaveRequestDTO"][];
-                        "text/json": components["schemas"]["LeaveRequestDTO"][];
+                        "text/plain": components["schemas"]["LeaveRequestDTOIEnumerableApiResponse"];
+                        "application/json": components["schemas"]["LeaveRequestDTOIEnumerableApiResponse"];
+                        "text/json": components["schemas"]["LeaveRequestDTOIEnumerableApiResponse"];
                     };
                 };
             };
@@ -131,9 +131,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["LeaveRequestDTO"];
-                        "application/json": components["schemas"]["LeaveRequestDTO"];
-                        "text/json": components["schemas"]["LeaveRequestDTO"];
+                        "text/plain": components["schemas"]["LeaveRequestDTOApiResponse"];
+                        "application/json": components["schemas"]["LeaveRequestDTOApiResponse"];
+                        "text/json": components["schemas"]["LeaveRequestDTOApiResponse"];
                     };
                 };
             };
@@ -174,7 +174,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["LeaveRequestDTOApiResponse"];
+                        "application/json": components["schemas"]["LeaveRequestDTOApiResponse"];
+                        "text/json": components["schemas"]["LeaveRequestDTOApiResponse"];
+                    };
                 };
             };
         };
@@ -195,7 +199,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["ApiResponse"];
+                        "application/json": components["schemas"]["ApiResponse"];
+                        "text/json": components["schemas"]["ApiResponse"];
+                    };
                 };
             };
         };
@@ -208,6 +216,14 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            status?: number;
+            data?: unknown;
+            errors?: components["schemas"]["ErrorInfo"];
+            meta?: components["schemas"]["MetaInfo"];
+        };
         Employee: {
             /** Format: int32 */
             id?: number;
@@ -215,8 +231,31 @@ export interface components {
             email?: string | null;
             role?: components["schemas"]["EmployeeRole"];
         };
+        EmployeeApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            status?: number;
+            data?: components["schemas"]["Employee"];
+            errors?: components["schemas"]["ErrorInfo"];
+            meta?: components["schemas"]["MetaInfo"];
+        };
+        EmployeeIEnumerableApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            status?: number;
+            data?: components["schemas"]["Employee"][] | null;
+            errors?: components["schemas"]["ErrorInfo"];
+            meta?: components["schemas"]["MetaInfo"];
+        };
         /** @enum {string} */
         EmployeeRole: "Employee" | "Manager";
+        ErrorInfo: {
+            code?: string | null;
+            message?: string | null;
+            details?: {
+                [key: string]: string[] | null;
+            } | null;
+        };
         LeaveRequestCreateDTO: {
             /** Format: int32 */
             employeeId?: number;
@@ -237,11 +276,35 @@ export interface components {
             status?: string | null;
             reason?: string | null;
         };
+        LeaveRequestDTOApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            status?: number;
+            data?: components["schemas"]["LeaveRequestDTO"];
+            errors?: components["schemas"]["ErrorInfo"];
+            meta?: components["schemas"]["MetaInfo"];
+        };
+        LeaveRequestDTOIEnumerableApiResponse: {
+            success?: boolean;
+            /** Format: int32 */
+            status?: number;
+            data?: components["schemas"]["LeaveRequestDTO"][] | null;
+            errors?: components["schemas"]["ErrorInfo"];
+            meta?: components["schemas"]["MetaInfo"];
+        };
         LeaveRequestUpdateStatusDTO: {
             status?: components["schemas"]["LeaveStatus"];
         };
         /** @enum {string} */
         LeaveStatus: "Pending" | "Approved" | "Rejected";
+        MetaInfo: {
+            /** Format: date-time */
+            timestamp?: string;
+            requestId?: string | null;
+            additional?: {
+                [key: string]: unknown;
+            } | null;
+        };
     };
     responses: never;
     parameters: never;
