@@ -37,6 +37,9 @@ namespace LeaveRequestAPI.Application.Services
                 }
                 // Si userId es null, retorna todas las solicitudes (para managers)
 
+                // ordenar por ID ascendente (1,2,3,4...)
+                query = query.OrderBy(x => x.Id);
+
                 // ejecutar la consulta
                 var entities = await query.ToListAsync();
 
