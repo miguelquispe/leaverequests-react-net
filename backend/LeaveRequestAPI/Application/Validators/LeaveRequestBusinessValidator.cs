@@ -56,7 +56,7 @@ public class LeaveRequestBusinessValidator
         if (overlappingRequest != null)
         {
             return Result.Failure(
-                $"The requested dates ({dto.StartDate:dd/MM/yyyy} - {dto.EndDate:dd/MM/yyyy}) overlap with an existing approved leave request ({overlappingRequest.StartDate:dd/MM/yyyy} - {overlappingRequest.EndDate:dd/MM/yyyy}). Please select different dates.",
+                $"Las fechas solicitadas ({dto.StartDate:dd/MM/yyyy} - {dto.EndDate:dd/MM/yyyy}) se solapan con una solicitud ya aprobada ({overlappingRequest.StartDate:dd/MM/yyyy} - {overlappingRequest.EndDate:dd/MM/yyyy}). Por favor selecciona fechas diferentes.",
                 BusinessErrorCodes.OVERLAPPING_REQUEST);
         }
 
