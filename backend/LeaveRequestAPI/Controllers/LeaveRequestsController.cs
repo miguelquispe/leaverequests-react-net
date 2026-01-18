@@ -149,9 +149,12 @@ namespace LeaveRequestAPI.Controllers
             if (!result.IsSuccess)
             {
                 _logger.LogWarning("Failed to delete leave request {LeaveRequestId}: {ErrorMessage}", id, result.ErrorMessage);
+                
+                return this.ApiFromResult(result);
             }
 
-            return this.ApiFromResult(result, 204);
+            // DELETE exitoso retorna 204 No Content sin cuerpo
+            return NoContent();
         }
     }
 }

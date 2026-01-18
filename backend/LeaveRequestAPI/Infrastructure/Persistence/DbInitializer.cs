@@ -41,7 +41,7 @@ public class DbInitializer
                 EmployeeId = employees[1].Id,
                 StartDate = DateTime.Today.AddDays(10),
                 EndDate = DateTime.Today.AddDays(12),
-                Status = LeaveStatus.Approved,
+                Status = LeaveStatus.Pending,
                 Reason = "Asuntos personales"
             },
             new LeaveRequest
@@ -49,7 +49,7 @@ public class DbInitializer
                 EmployeeId = employees[2].Id,
                 StartDate = DateTime.Today.AddDays(1),
                 EndDate = DateTime.Today.AddDays(3),
-                Status = LeaveStatus.Rejected,
+                Status = LeaveStatus.Pending,
                 Reason = "Enfermedad"
             }
         };
