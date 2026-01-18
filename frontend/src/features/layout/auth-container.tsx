@@ -1,5 +1,5 @@
-import { useAuth } from "@/contexts/AuthContext";
 import React from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 function AuthContainer({ children }: { children: React.ReactNode }) {
   const { user, logout, isAuthenticated } = useAuth();
