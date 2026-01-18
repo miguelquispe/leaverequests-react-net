@@ -28,6 +28,7 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    console.log('API Error:', error);
     if (error.response?.status === 401) {
       localStorage.removeItem('authToken');
       localStorage.removeItem('userId');

@@ -1,5 +1,5 @@
-import { LeaveRequestList } from "@/features/leaverequests/components/leave-request-list";
 import { useApp } from "@/contexts/AppContext";
+import { LeaveRequestsView } from "@/features/leaverequests/views/leave-requests-view";
 
 function DashboardPage() {
   const { navigateTo } = useApp();
@@ -19,7 +19,7 @@ function DashboardPage() {
           Create Leave Request
         </button>
       </div>
-      <LeaveRequestList />
+      <LeaveRequestsView />
     </div>
   );
 }
